@@ -17,9 +17,10 @@
         'views/current_stock_report_template.xml',
         'views/current_stock_report_template_pdf.xml',
     ],
+    'images': ['static/description/main_screenshot.png'],
     'application': False,
     'installable': True,
     'auto_install': False,
     'price': 15,
-    'currency': 'USD',    
+    'currency': 'USD',
 }
