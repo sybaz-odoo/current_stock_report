@@ -1,0 +1,117 @@
+<odoo>
+    <template id="current_stock_report_template">
+        <t t-call="web.html_container">
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;">
+				<div>
+					<h2><t t-esc="company_name"/></h2>
+					<h3>Current Stock Report</h3>
+					<div class="oe_structure"/>
+					<p>Date From: <t t-esc="disp_start_date"/> <span style="padding-left: 50px;">To:</span> <t t-esc="disp_end_date"/></p>
+				</div>
+				<div>
+					<p>
+						<form name="form_current_stock_report_xls" action="/web/current_stock_report" method="post">
+							<input type="hidden" name="start_date" t-att-value="start_date"/>
+							<input type="hidden" name="end_date" t-att-value="end_date"/>
+							<input type="hidden" name="category_ids" t-att-value="category_ids"/>
+							<input type="hidden" name="tag_ids" t-att-value="tag_ids"/>
+							<input type="hidden" name="exclusive_loc_ids" t-att-value="exclusive_loc_ids"/>
+							<input type="hidden" name="display_type" value="xls"/>
+							<button type="submit" class="btn btn-primary">Export to Excel</button>
+						</form>
+					</p>
+					<p>
+						<form name="form_current_stock_report_pdf" action="/web/current_stock_report" method="post">
+							<input type="hidden" name="start_date" t-att-value="start_date"/>
+							<input type="hidden" name="end_date" t-att-value="end_date"/>
+							<input type="hidden" name="category_ids" t-att-value="category_ids"/>
+							<input type="hidden" name="tag_ids" t-att-value="tag_ids"/>
+							<input type="hidden" name="exclusive_loc_ids" t-att-value="exclusive_loc_ids"/>
+							<input type="hidden" name="display_type" value="pdf"/>
+							<button type="submit" class="btn btn-primary">Export to PDF</button>
+						</form>
+					</p>
+				</div>
+			</div>
+			<table class="table table-striped" style="font-size: 12px;">
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>ID</th>
+						<th>Tags</th>
+						<th style="text-align:right;">Opening Balance</th>
+						<th style="text-align:right;">Received</th>
+						<th style="text-align:right;">Issued</th>
+						<th style="text-align:right;">Closing Balance</th>
+					</tr>
+				</thead>
+ 				<tbody>
+					<t t-set="current_category" t-value="None"/>
+					<t t-set="ct_opening" t-value="0"/>
+					<t t-set="ct_received" t-value="0"/>
+					<t t-set="ct_issued" t-value="0"/>
+					<t t-set="ct_closing" t-value="0"/>
+					<t t-set="rec_no" t-value="0"/>
+					<t t-foreach="data" t-as="line">
+						<!-- Check if the category name has changed -->
+						<t t-if="line['categ_name'] != current_category">
+							<!-- Update the current_category -->
+							<t t-set="current_category" t-value="line['categ_name']"/>
+							<t t-if="rec_no != 0">
+								<tr>
+									<td style="text-align: right;" colspan="3"><strong>Category Total</strong></td>
+									<td style="text-align:right;"><strong><t t-esc="ct_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+									<td style="text-align:right;"><strong><t t-esc="ct_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+									<td style="text-align:right;"><strong><t t-esc="ct_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+									<td style="text-align:right;"><strong><t t-esc="ct_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+								</tr>
+							</t>
+							<t t-set="ct_opening" t-value="0"/>
+							<t t-set="ct_received" t-value="0"/>
+							<t t-set="ct_issued" t-value="0"/>
+							<t t-set="ct_closing" t-value="0"/>
+
+							<!-- Display the category name -->
+							<tr><td colspan="7"><strong><h6 t-esc="line['categ_name']"/></strong></td></tr>
+						</t>
+						<t t-set="ct_opening" t-value="ct_opening + line['open_qty_raw']"/>
+						<t t-set="ct_received" t-value="ct_received + line['rcvd_qty_raw']"/>
+						<t t-set="ct_issued" t-value="ct_issued + line['issu_qty_raw']"/>
+						<t t-set="ct_closing" t-value="ct_closing + line['clos_qty_raw']"/>
+						<t t-set="rec_no" t-value="rec_no + 1"/>
+						<tr>
+							<td><t t-esc="line['product_name']"/></td>
+							<td><t t-esc="line['product_ref']"/></td>
+							<td><t t-esc="line['tag_names']"/></td>
+							<td style="text-align:right;"><t t-esc="line['open_qty_fmt']"/></td>
+							<td style="text-align:right;"><t t-esc="line['rcvd_qty_fmt']"/></td>
+							<td style="text-align:right;"><t t-esc="line['issu_qty_fmt']"/></td>
+							<td style="text-align:right;"><t t-esc="line['clos_qty_fmt']"/></td>
+						</tr>
+					</t>
+					<tr>
+						<td style="text-align: right;" colspan="3"><strong>Category Total</strong></td>
+						<td style="text-align:right;"><strong><t t-esc="ct_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="ct_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="ct_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="ct_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+					</tr>
+
+				</tbody>
+				<tfoot>
+					<tr>
+						<t t-set="gt_opening" t-value="sum([line['open_qty_raw'] for line in data])"/>
+						<t t-set="gt_received" t-value="sum([line['rcvd_qty_raw'] for line in data])"/>
+						<t t-set="gt_issued" t-value="sum([line['issu_qty_raw'] for line in data])"/>
+						<t t-set="gt_closing" t-value="sum([line['clos_qty_raw'] for line in data])"/>
+						<td style="text-align: right;" colspan="3"><strong>Grand Total</strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+					</tr>
+				</tfoot>
+			</table>
+        </t>
+    </template>
+</odoo>

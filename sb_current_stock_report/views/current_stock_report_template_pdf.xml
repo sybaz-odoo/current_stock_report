@@ -1,0 +1,126 @@
+<odoo>
+	<record id="sb_current_stock_report.action_current_stock_report" model="ir.actions.report">
+		<field name="name">Current Stock Report</field>
+		<field name="model">stock.move</field>
+		<field name="report_type">qweb-pdf</field>
+        <field name="report_name">sb_current_stock_report.current_stock_report_pdf</field>
+        <field name="report_file">sb_current_stock_report.current_stock_report_pdf</field>
+		<field name="binding_model_id" eval="False"/>
+		<field name="binding_type">report</field>
+	</record>
+	<template id="current_stock_report_pdf" name="Current Stock Report">
+        <t t-set="data_report_landscape" t-value="True"/>
+        <t t-set="full_width" t-value="True"/>
+		<t t-call="web.html_container">
+			<div class="header" style="text-align: center;">
+				<div><h2 t-esc="company_name"/></div>
+				<div><h3>Current Stock Report</h3></div>
+				<div><h5 style="font-weight: bold">Date Range : <t t-esc="'&#160;&#160;&#160;&#160;&#160;&#160;'"/>From<t t-esc="'&#160;&#160;&#160;&#160;&#160;&#160;'"/> <t t-esc="start_date+ '&#160;&#160;&#160;&#160;&#160;&#160;'"/> To <t t-esc="'&#160;&#160;&#160;&#160;&#160;&#160;'+end_date"/></h5></div>
+			</div>
+            <div class="page">
+                <style>
+                    body, header, footer {
+                    font-family: Arial,Helvetica,sans-serif !important;
+                    font-size: 14px;
+                    line-height: 1.25 !important;
+                    }
+                    table, th, td {
+                        border-collapse: collapse;
+                    }
+
+                    .table th, .table td {
+                        padding: 6px !important;
+                    }
+                </style>
+
+				<table class="table table-bordered" align="center">
+					<thead>
+						<tr>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 35%;">Title</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 10%;">ID</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 11%;">Tags</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 11%;">Opening Balance</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 11%;">Received</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 11%;">Issued</th>
+							<th style="text-align: center; border:1px solid black; background-color: #CCCCCC; width: 11%;">Closing Balance</th>
+						</tr>
+					</thead>
+					<body>
+						<t t-set="current_category" t-value="None"/>
+						<t t-set="row" t-value="1"/>
+						<t t-foreach="det_data" t-as="line">
+							<!-- Check if the category name has changed -->
+							<t t-if="line['categ_name'] != current_category">
+								<t t-if="row != 1">
+									<t t-set="ct_opening" t-value="sum([line['open_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+									<t t-set="ct_received" t-value="sum([line['rcvd_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+									<t t-set="ct_issued" t-value="sum([line['issu_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+									<t t-set="ct_closing" t-value="sum([line['clos_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+									<tr>
+										<td style="text-align: right;" colspan="3"><strong>Category Total</strong></td>
+										<td style="text-align:right;"><strong><t t-esc="ct_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+										<td style="text-align:right;"><strong><t t-esc="ct_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+										<td style="text-align:right;"><strong><t t-esc="ct_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+										<td style="text-align:right;"><strong><t t-esc="ct_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+									</tr>
+								</t>
+								<!-- Update the current_category -->
+								<t t-set="current_category" t-value="line['categ_name']"/>
+
+								<!-- Display the category name -->
+								<tr><td colspan="7"><strong><h3 t-esc="line['categ_name']"/></strong></td></tr>
+							</t>
+
+							<t t-if="row % 2 == 0">
+								<tr>
+									<td style="border:1px solid black;"><span t-esc="line['product_name']" /></td>
+									<td style="border:1px solid black;"><span t-esc="line['product_ref']" /></td>
+									<td style="border:1px solid black;"><span t-esc="line['tag_names']" /></td>
+									<td style="text-align:right; border:1px solid black;"><span t-esc="line['open_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black;"><span t-esc="line['rcvd_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black;"><span t-esc="line['issu_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black;"><span t-esc="line['clos_qty_fmt']" /></td>
+								</tr>
+							</t>
+							<t t-else="">
+								<tr>
+									<td style="border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['product_name']" /></td>
+									<td style="border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['product_ref']" /></td>
+									<td style="border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['tag_names']" /></td>
+									<td style="text-align:right; border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['open_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['rcvd_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['issu_qty_fmt']" /></td>
+									<td style="text-align:right; border:1px solid black; background-color: #CCCCCC;"><span t-esc="line['clos_qty_fmt']" /></td>
+								</tr>
+							</t>
+							<t t-set="row" t-value="row + 1"/>
+						</t>
+						<t t-set="ct_opening" t-value="sum([line['open_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+						<t t-set="ct_received" t-value="sum([line['rcvd_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+						<t t-set="ct_issued" t-value="sum([line['issu_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+						<t t-set="ct_closing" t-value="sum([line['clos_qty_raw'] for line in det_data if line['categ_name'] == current_category])"/>
+						<tr>
+							<td style="text-align: right;" colspan="3"><strong>Category Total</strong></td>
+							<td style="text-align:right;"><strong><t t-esc="ct_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+							<td style="text-align:right;"><strong><t t-esc="ct_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+							<td style="text-align:right;"><strong><t t-esc="ct_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+							<td style="text-align:right;"><strong><t t-esc="ct_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						</tr>
+
+					</body>
+					<tr>
+						<t t-set="gt_opening" t-value="sum([line['open_qty_raw'] for line in det_data])"/>
+						<t t-set="gt_received" t-value="sum([line['rcvd_qty_raw'] for line in det_data])"/>
+						<t t-set="gt_issued" t-value="sum([line['issu_qty_raw'] for line in det_data])"/>
+						<t t-set="gt_closing" t-value="sum([line['clos_qty_raw'] for line in det_data])"/>
+						<td style="text-align: right;" colspan="3"><strong>Grand Total</strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_opening" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_received" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_issued" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+						<td style="text-align:right;"><strong><t t-esc="gt_closing" t-options='{"widget": "float", "precision": 4}'/></strong></td>
+					</tr>
+				</table>
+			</div>
+		</t>
+	</template>
+</odoo>
